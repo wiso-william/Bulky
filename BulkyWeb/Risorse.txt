@@ -36,3 +36,132 @@ below builder.Services.AddControllersWithViews(); add:
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 ♠♠♠
 This code is telling your program where to find the db connection string
+9. In caso non avessi SQL server e SSML scaricali da microsoft. Il server si avvia in automatico while(computerIsOn).
+Per arrestarlo se servisse lo trovi nei service del PC ma su idle consuma poca ram.
+Nella connection string alla fine dell'istallazione trovi il nome del tuo server, con l'istallazione predefinita è localhost
+copia localhost e incollalo in SSL e digli che la connessione è trusted(c'e una checkbox in basso).
+Si dovrebbe collegare senza problemi al server SQL locale.
+Ora su VS premi tools => Nugget package manager => Console => scrivi update-database
+Ci mette un attimo, se alla fine ti dice Done controlla SSL per vedere se il nome del db che hai messo nella stringa di appsetting.json
+è stato creato con successo. Avrà creato anche una tabella che per il momento non serve toccare.
+Ricorda di refreshare SSL per vedere se ci sono cambiamenti altrimenti non li vedrai mai.
+
+
+## Come creare una tabella del db
+1. Crea un modello con le proprietà he vuoi
+2. In ApplicationDbContect.cs dentro la classe ma fuori dal costruttore aggiungi questo:
+♠♠♠
+public DbSet<CategoryModel> Categories { get; set; }
+♠♠♠
+In DbSet<> inserirai il nome del modello da utilizzare per la tabella del db
+3.Strumenti => Nugget package Manager => Console => add-migration messaggioCheSpiegaCosaSiStaFacendo
+E.g. add-migration AddCategoryTableToDb
+4.Apparirà una cartella chiamata Migrations nel progetto, serve per gestire potenziali errori se abbiamo fatto qualcosa di sbagliato
+*La tabella creata non crerà direttamente la tabella nel db
+5. Per fare in modo che l'update abbia effetto usa update-database
+*Questo controllerà tutto quello che è nella cartella migrations, traduce in SQL e fa quello che gli è stato detto.
+
+
+## Come creare un controller e una view associata
+1. Nella cartella controller crea un file cs con lo stesso nome del model e.g. CategoryController di tipo empty controller
+2. Nella cartella Views crea una cartella con lo stesso nome usato prima di controller e.g. Category
+3. All'interno di questa cartella crea un empty razor view, index va bene dato che è collegato direttamente al controller
+e.g. index.cshtml. Cancella il boilerplate e aggiungi l'html che vuoi.
+> Avrai notato che è scomodo dover scrivere nella barra di ricerca dove si trova la tua pagina, aggiungiamo un link nell'header.
+
+## Come aggiungere un <a href""> all'header
+*Se hai problemi di certificati SSL risolvili
+Tutti i contenuti dell'header si trovano all'interno di Views/Shared/_Layout
+Trova gl <li> della navigation e copiane uno, cambia il nome in quello che vuoi.
+Vedrai **asp-controller** e **asp-action** metti Il nome del controller e quello che implementa IActionResult
+e.g. asp-controller="Category" asp-action="Index". Sono degli helper che dicono al programma dove trovare la view associata
+Ecco fatto che abbiamo un nuovo link nella nostra navigation.
+
+## Manually populating tables
+To manually populate a table go to ApplicationDbContext and add:
+♠♠♠
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<CategoryModel>().HasData(
+                new CategoryModel() { Id = 1, Name = "Action", DisplayOrder = 1},
+                new CategoryModel() { Id = 2, Name = "Sci-Fi", DisplayOrder = 1},
+                new CategoryModel() { Id = 3, Name = "Adventure", DisplayOrder = 1}
+                );
+        }
+♠♠♠
+
+## How to retrieve and show data from a model in the view
+1. In the controller add : 
+♠♠♠
+private readonly ApplicationDbContext _db;
+        public CategoryController(ApplicationDbContext db)
+        {
+            _db = db;
+            
+        }
+♠♠♠
+This uses controller dependecy injection to make you retrieve the data
+2. Change the action so that it looks like this:
+♠♠♠
+public IActionResult Index()
+        {
+            List<CategoryModel> objCategoryList = _db.Categories.ToList();
+            return View(objCategoryList);
+        }
+♠♠♠
+This passes the data that we retrieved to the associated view
+3. At the top of the view add: @model List<CategoryModel>
+This allows the view to use the data retrieved.
+4. To use the data you can do something like this:
+♠♠♠
+<table class="table table-bordered table-striped">
+	<thead>
+<tr>
+	<th>
+		Category Name
+	</th>
+	<th>
+		Display order
+	</th>
+</tr>
+	</thead>
+	<tbody>
+		@foreach(var ele in Model.OrderBy(u => u.DisplayOrder)){
+		<tr>
+		<td>@ele.Name</td>
+		<td>@ele.DisplayOrder</td>
+		</tr>
+		}
+	</tbody>
+</table>
+♠♠♠
+
+## Bootstrap Themes 36
+- Bootswatch
+- icons.getbootstrap.com
+La classe "form-controll" di bootstrap fa in modo che l'elemento prenda tutto lo spazio available
+La classe "row" la rende responsive
+
+## Creating another view for the same controller
+Let's say we want to create an "Add category button", to do that we need a new view and a new action.
+1.Create this in the original controller
+♠♠♠
+public IActionResult Create()
+        {
+            return View();
+        }
+♠♠♠
+Same interface to create an action.
+Trova gl <li> della navigation e copiane uno, cambia il nome in quello che vuoi.
+Vedrai **asp-controller** e **asp-action** metti Il nome del controller e quello che implementa IActionResult.
+Same as above
+Then create a view with the same name and add the html/css
+
+### ASP helpers
+- **for:** is used to data-bind in a view. Just pass the property you want to bind
+Can also be used inside of labels to pass in the property name as content.
+To use this effectively you can use the [DisplayName()] annotation in your model to set the name in the UI
+- **controller:** tell your html link which controller you want to take the action from
+- **action:** tells your html which implementation of Action interface you want to use to show which view 
+- **validation-for:** use this in a span under an input field so that if the content entered is invalid
+it will show an error message, you can add the "text-danger" class
