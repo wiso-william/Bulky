@@ -1,0 +1,38 @@
+﻿NuGet = Maven,Gradle,NPM etc...
+Microsoft.Entity.Server.Core = JPA
+Microsoft.Entity.Server.Core.SQLServer = Hibernate
+Microsoft.EntityFrameworkCore.Tools = Springboot tools
+
+## Basic Setup for the Entity Framework
+1. Create a db with SQL server Manager
+2.Copia questo codice in appsettings.json
+♠♠♠
+// We add the code bellow to connect to our db
+    "ConnectionStrings": {
+        //Replace server and db names with your own
+        "DefaultConnection": "Server=serverName*;Database=databaseName*;Trusted_Connection=True;TrustServerCertificate=True"
+    }
+♠♠♠
+3.Cambia il nome del server e db e cancella i commenti
+4.Tasto destro sul nome del progetto => Nuget e scarica:
+- Microsoft.Entity.Server.Core
+- Microsoft.Entity.Server.Core.SQLServer
+- Microsoft.Entity.Server.Core.Tools 
+5. MAKE SURE ALL THE PACKAGES YOU INSTALL ARE OF THE SAME RELEASE VERSION OR STUFF WILL NOT WORK
+6. Create a new folder at root level called Data and create a class in it called ApplicationDbContext.cs
+7. This is what ApplicationDbContext.cs should look like(Don't delete the namespace):
+♠♠♠
+public class ApplicationDbContext : DbContext
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base (options)
+        {
+            
+        }
+    }
+♠♠♠
+8. In program.cs where there is the "add services to the container" comment, 
+below builder.Services.AddControllersWithViews(); add:
+♠♠♠
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+♠♠♠
+This code is telling your program where to find the db connection string
