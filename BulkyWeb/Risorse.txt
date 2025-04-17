@@ -165,3 +165,45 @@ To use this effectively you can use the [DisplayName()] annotation in your model
 - **action:** tells your html which implementation of Action interface you want to use to show which view 
 - **validation-for:** use this in a span under an input field so that if the content entered is invalid
 it will show an error message, you can add the "text-danger" class
+- **route-x:** where x is a name you chose, it will tell the action that needs a primary key as a parameter what that ket is
+e.g. asp-route-id="@ele.id" look ho to setup the controller in the "CRUD OPERATIOS" Update and delete
+
+## CRUD - UPDATE-DELETE
+♠♠♠
+public IActionResult Edit(int? id) {
+            if (id == null || id == 0)
+            {
+                return NotFound();
+            }
+            CategoryModel CategoryFromDb = _db.Categories.Find(id);
+            if (CategoryFromDb == null) { 
+            return NotFound();
+            }
+            return View(CategoryFromDb);
+        }
+
+        [HttpPost] // Remember this 
+        public IActionResult Edit(CategoryModel ele) 
+        {
+            if (ModelState.IsValid) 
+            {
+                _db.Categories.Update(ele);
+                _db.SaveChanges(); 
+                return RedirectToAction("Index"); 
+                                                  
+            }
+            return View();
+        }
+♠♠♠
+Add this to your controller, as you can see you need to pass the id, you do that with asp-route-x,
+you can find the explaination of how that works in the ASP section.
+> Find only works on primary keys, in case you want to search something else you can use First or default which allows you to search on
+a particular field in whichever way you want but KISS. You can also use Where but go study it on your own.
+
+**HOPEFULLY AS YOU MIGHT HAVE GUESSED SINCE WE ARE RETURNING A VIEW WE MUST CREATE THE EDIT VIEW :D**
+So what have we done to successfully implement the update
+1. Copy the Create controller code and changed the name to edit
+2. Changed the Add method to Update
+3. Added some if statements so that the app doesn't crash if someone looks for an id that doesn't exist
+4. Copied the create view as it is and changed the UI to so that it is understandable
+5. That is it ASP does the rest.
