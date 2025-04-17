@@ -137,10 +137,12 @@ This allows the view to use the data retrieved.
 ♠♠♠
 
 ## Bootstrap Themes 36
-- Bootswatch
+- Bootswatch for themes
 - icons.getbootstrap.com
+- Toastr for notifications
 La classe "form-controll" di bootstrap fa in modo che l'elemento prenda tutto lo spazio available
 La classe "row" la rende responsive
+
 
 ## Creating another view for the same controller
 Let's say we want to create an "Add category button", to do that we need a new view and a new action.
@@ -168,7 +170,7 @@ it will show an error message, you can add the "text-danger" class
 - **route-x:** where x is a name you chose, it will tell the action that needs a primary key as a parameter what that ket is
 e.g. asp-route-id="@ele.id" look ho to setup the controller in the "CRUD OPERATIOS" Update and delete
 
-## CRUD - UPDATE-DELETE
+## CRUD - UPDATE
 ♠♠♠
 public IActionResult Edit(int? id) {
             if (id == null || id == 0)
@@ -207,3 +209,41 @@ So what have we done to successfully implement the update
 3. Added some if statements so that the app doesn't crash if someone looks for an id that doesn't exist
 4. Copied the create view as it is and changed the UI to so that it is understandable
 5. That is it ASP does the rest.
+6. If your primary key is not Id but something else you must add <input asp-for="Id" hidden /> where Id is the name or it will not work
+
+
+## CRUD - DELETE
+♠♠♠
+public IActionResult Delete(int? id)
+        {
+            if (id == null || id == 0)
+            {
+                return NotFound();
+            }
+            CategoryModel CategoryFromDb = _db.Categories.Find(id);
+            if (CategoryFromDb == null)
+            {
+                return NotFound();
+            }
+            return View(CategoryFromDb);
+        }
+
+        [HttpPost,ActionName("Delete")]
+        public IActionResult DeletePOST(int? id)
+        {
+            CategoryModel ele = _db.Categories.Find(id); 
+            if (ele == null) return NotFound(); 
+            _db.Categories.Remove(ele);
+            _db.SaveChanges();
+            return RedirectToAction("Index");
+        }
+♠♠♠
+2. Create a corresponding view copying edit
+3. Remove all the validation that you have in that file and modify the UI
+4. In index.cshtml add the asp-route-id="@ele.Id" or obj.Id so that it's the same as the edit to let the program know which entry to delete
+5. Add <input asp-for="Id" hidden /> as a delete input field, it's not necessary but it makes 110% sure that you delete the right record
+
+### TempData["x"]="x"
+You can use this to render a message for the next page refresh, helps the user understand that they did something
+Look at the controller
+You should create a _Notfication in the shared views with the code and then add <partial name="yourSharedviewName" /> to the page you want this to show on
