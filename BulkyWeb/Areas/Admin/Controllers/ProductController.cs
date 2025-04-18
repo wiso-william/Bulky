@@ -8,18 +8,18 @@ using Bulky.DataAccess.Repository;
 namespace BulkyWeb.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    public class CategoryController : Controller
+    public class ProductController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
-        public CategoryController(IUnitOfWork unitOfWork)
+        public ProductController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
             
         }
         public IActionResult Index()
         {
-            List<CategoryModel> objCategoryList = _unitOfWork.Category.GetAll().ToList(); 
-            return View(objCategoryList); // What is passed to the view when the Index action is called
+            List<Product> objProductList = _unitOfWork.Product.GetAll().ToList(); 
+            return View(objProductList); // What is passed to the view when the Index action is called
         }
 
         public IActionResult Create()
@@ -28,13 +28,13 @@ namespace BulkyWeb.Areas.Admin.Controllers
         }
 
         [HttpPost] // Annotation that allows http comunication
-        public IActionResult Create(CategoryModel ele) //Same type as the one passed to the view, so to the post form
+        public IActionResult Create(Product ele) //Same type as the one passed to the view, so to the post form
         {
             if (ModelState.IsValid) //Se passa i validator
             {
-                _unitOfWork.Category.Add(ele); // Tells what to add, makes it so you can do multiple adds before calling the db
+                _unitOfWork.Product.Add(ele); // Tells what to add, makes it so you can do multiple adds before calling the db
                 _unitOfWork.Save(); //Saves the changes to the db
-                TempData["Success"] = "Category created successfully";
+                TempData["Success"] = "Product created successfully";
             return RedirectToAction("Index"); //Since we are in the same controller this is enough
             // if you want to go to a different controller ("Index","ControllerName")
             }
@@ -46,21 +46,27 @@ namespace BulkyWeb.Areas.Admin.Controllers
             {
                 return NotFound();
             }
-            CategoryModel? CategoryFromDb = _unitOfWork.Category.Get(u=>u.Id == id);
-            if (CategoryFromDb == null) { 
+            Product? ProductFromDb = _unitOfWork.Product.Get(u=>u.Id == id);
+            if (ProductFromDb == null) { 
             return NotFound();
             }
-            return View(CategoryFromDb);
+            return View(ProductFromDb);
         }
 
         [HttpPost]
-        public IActionResult Edit(CategoryModel ele) 
+        public IActionResult Edit(Product ele) 
         {
+            if (!ModelState.IsValid)
+            {
+                Console.WriteLine("ModelState is not valid");
+                return View(ele);
+            }
             if (ModelState.IsValid) 
             {
-                _unitOfWork.Category.Update(ele);
+                _unitOfWork.Product.Update(ele);
+                Console.WriteLine("sono nell save");
                 _unitOfWork.Save();
-                TempData["Success"] = "Category updated successfully";
+                TempData["Success"] = "Product updated successfully";
                 return RedirectToAction("Index"); 
                                                   
             }
@@ -72,22 +78,22 @@ namespace BulkyWeb.Areas.Admin.Controllers
             {
                 return NotFound();
             }
-            CategoryModel CategoryFromDb = _unitOfWork.Category.Get(u => u.Id == id);
-            if (CategoryFromDb == null)
+            Product ProductFromDb = _unitOfWork.Product.Get(u => u.Id == id);
+            if (ProductFromDb == null)
             {
                 return NotFound();
             }
-            return View(CategoryFromDb);
+            return View(ProductFromDb);
         }
 
         [HttpPost,ActionName("Delete")]
         public IActionResult DeletePOST(int? id)
         {
-            CategoryModel ele = _unitOfWork.Category.Get(u => u.Id == id);
+            Product ele = _unitOfWork.Product.Get(u => u.Id == id);
             if (ele == null) return NotFound();
-            _unitOfWork.Category.Remove(ele);
+            _unitOfWork.Product.Remove(ele);
             _unitOfWork.Save();
-            TempData["Success"] = "Category deleted successfully";
+            TempData["Success"] = "Product deleted successfully";
             return RedirectToAction("Index");
         }
     }
