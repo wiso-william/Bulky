@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Bulky.DataAccess.Data;
 using Bulky.DataAccess.Repository.IRepository;
 using Bulky.DataAccess.Repository;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Bulky.Models.ViewModels;
 
 namespace BulkyWeb.Areas.Admin.Controllers
 {
@@ -18,60 +20,59 @@ namespace BulkyWeb.Areas.Admin.Controllers
         }
         public IActionResult Index()
         {
-            List<Product> objProductList = _unitOfWork.Product.GetAll().ToList(); 
+            List<Product> objProductList = _unitOfWork.Product.GetAll().ToList();
             return View(objProductList); // What is passed to the view when the Index action is called
         }
 
-        public IActionResult Create()
+        public IActionResult Upsert(int? id)
         {
-            return View();
+            ProductVM productVM = new()
+            {
+                CategoryList = _unitOfWork.Category.GetAll().Select(u => new SelectListItem
+                {
+                    Text = u.Name,
+                    Value = u.Id.ToString()
+
+                }),
+                Product = new Product(),
+            };
+            if (id == null || id == 0) { 
+                //Create
+            return View(productVM);
+            }
+            else
+            {
+                //Update
+                productVM.Product = _unitOfWork.Product.Get(u => u.Id == id);
+                return View(productVM);
+            }
         }
 
-        [HttpPost] // Annotation that allows http comunication
-        public IActionResult Create(Product ele) //Same type as the one passed to the view, so to the post form
+        [HttpPost] 
+        public IActionResult Upsert(ProductVM productVM, IFormFile? file) 
         {
-            if (ModelState.IsValid) //Se passa i validator
-            {
-                _unitOfWork.Product.Add(ele); // Tells what to add, makes it so you can do multiple adds before calling the db
-                _unitOfWork.Save(); //Saves the changes to the db
-                TempData["Success"] = "Product created successfully";
-            return RedirectToAction("Index"); //Since we are in the same controller this is enough
-            // if you want to go to a different controller ("Index","ControllerName")
-            }
-            return View(); 
-        }
-
-        public IActionResult Edit(int? id) {
-            if (id == null || id == 0)
-            {
-                return NotFound();
-            }
-            Product? ProductFromDb = _unitOfWork.Product.Get(u=>u.Id == id);
-            if (ProductFromDb == null) { 
-            return NotFound();
-            }
-            return View(ProductFromDb);
-        }
-
-        [HttpPost]
-        public IActionResult Edit(Product ele) 
-        {
-            if (!ModelState.IsValid)
-            {
-                Console.WriteLine("ModelState is not valid");
-                return View(ele);
-            }
             if (ModelState.IsValid) 
             {
-                _unitOfWork.Product.Update(ele);
-                Console.WriteLine("sono nell save");
-                _unitOfWork.Save();
-                TempData["Success"] = "Product updated successfully";
-                return RedirectToAction("Index"); 
-                                                  
+                _unitOfWork.Product.Add(productVM.Product); 
+                _unitOfWork.Save(); 
+                TempData["Success"] = "Product created successfully";
+            return RedirectToAction("Index"); 
             }
-            return View();
+            else
+            {
+
+                productVM.CategoryList = _unitOfWork.Category.GetAll().Select(u => new SelectListItem
+                {
+                    Text = u.Name,
+                    Value = u.Id.ToString()
+
+                });
+                
+                return View(productVM); 
+            }
         }
+
+        
         public IActionResult Delete(int? id)
         {
             if (id == null || id == 0)
